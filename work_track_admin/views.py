@@ -172,35 +172,67 @@ def View_Projects(request):
         except Exception as e:
             return JsonResponse({'error':f'viewed data{str(e)}'})
     return JsonResponse({'error':'invalid request method'})
-#
-# def update_projects(request,id):
-#     proj = get_object_or_404(Projects, id=id)
-#     if request.method=='GET':
-#         return JsonResponse({
-#             "Project_Name":proj.Project_Name,
-#             "Company_Name": proj.Company_Name,
-#             'Description': proj.Description,
-#             'Assigned_to': proj.Assigned_to,
-#             'Due_Date': proj.Due_Date,
-#             'Est_Hour': proj.Est_Hour,
-#             'Priority': proj.Priority,
-#             'Links': proj.Links,
-#             'Attachments': proj.Attachments,
-#             'Status': proj.Status
-#         })
-#     if request.method=="POST":
-#         try:
-#             update_projectname = request.POST.get('task-name', proj.Task_Name)
-#             update_companyname=request.POST.get('company_name',pro.Company_Name)
-#             update_description = request.POST.get('description', proj.Description)
-#             update_assignedto = request.POST.get('assigned-by', proj.Assigned_By)
-#             update_duedate = request.POST.get('due-date', proj.Due_Date)
-#             update_efforthrs = request.POST.get('working-hours', proj.Working_Hours)
-#             update_links = request.POST.get('links', proj.Links)
-#             update_attachments = request.POST.get('attachments', proj.Attachments)
-#             update_status = request.POST.get('status', proj.Status)
-#
-#             update_discussion = request.POST.get('discussion', proj.Discussion)
+
+@csrf_exempt
+def update_projects(request,id):
+    proj = get_object_or_404(Projects,id=id)
+    if request.method=='GET':
+        return JsonResponse({
+            "Project_Name":proj.Project_Name,
+            "Company_Name": proj.Company_Name,
+            'Description': proj.Description,
+            'Assigned_to': proj.Assigned_to,
+            'Due_Date': proj.Due_Date,
+            'Est_Hour': proj.Est_Hour,
+            'Priority': proj.Priority,
+            'Links': proj.Links,
+            'Attachments': proj.Attachments,
+            'Status': proj.Status
+        })
+    elif request.method=="POST":
+        try:
+            update_projectname = request.POST.get('task-name', proj.Project_Name)
+            update_companyname=request.POST.get('company_name',proj.Company_Name)
+            update_description = request.POST.get('description', proj.Description)
+            update_assignedto = request.POST.get('assigned-by', proj.Assigned_to)
+            update_duedate = request.POST.get('due-date', proj.Due_Date)
+            update_esthrs = request.POST.get('working-hours', proj.Est_Hour)
+            update_priority=request.POST.get('priority',proj.Priority)
+            update_links = request.POST.get('links', proj.Links)
+            update_attachments = request.POST.get('attachments', proj.Attachments)
+            update_status = request.POST.get('status', proj.Status)
+
+            proj.Project_Name=update_projectname
+            proj.Company_Name = update_companyname
+            proj.Description = update_description
+            proj.Assigned_By = update_assignedto
+            proj.Due_Date = update_duedate
+            proj.Est_Hour = update_esthrs
+            proj.Priority = update_priority
+            proj.Links = update_links
+            proj.Attachments = update_attachments
+            proj.Status = update_status
+
+            proj.save()
+
+            return JsonResponse({'message':'successfully updated','id':proj.id})
+        except Exception as e:
+            return JsonResponse({'error':f'updated field{str(e)}'})
+    return JsonResponse({'error':'invalid request method'})
+
+@csrf_exempt
+def Delete_Projects(request,id):
+    if request.method=='DELETE':
+        try:
+            projs=get_object_or_404(Projects,id=id)
+            projs.delete()
+            return JsonResponse({'message':'Successfully deleted datas'})
+        except Exception as e:
+            return JsonResponse({'error':f'deleted field    {str(e)}'})
+    return JsonResponse({'error':'invalid request method'})
+
+
+
 
 
 
