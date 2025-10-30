@@ -12,5 +12,6 @@ urlpatterns = [
     path('delete_projects/<int:id>',views.Delete_Projects,name='Delete_projects'),
 
     path('update-task-status/', views.update_task_status, name='update_task_status'),
+    path('hello',views.hello)
 
 ]

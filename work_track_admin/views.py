@@ -265,7 +265,8 @@ def update_task_status(request):
 
     return JsonResponse({"status": "error", "message": "POST method required"}, status=400)
 
-
+def hello(request):
+    return render(request,'index.html')
 
 
 
