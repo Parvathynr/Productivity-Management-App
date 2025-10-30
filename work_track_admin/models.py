@@ -1,3 +1,5 @@
+from time import timezone
+
 from django.db import models
 from django.db.models import DateField
 from django.views.decorators.csrf import csrf_exempt
@@ -40,3 +42,10 @@ class Projects(models.Model):
     Status = models.CharField(max_length=50,choices=Status_choices)
     Active=models.CharField(max_length=15,choices=Active_choices)
 
+# class TimeTrack(models.Models):
+#     User_Id=models.IntegerField()
+#     Task_Id=models.IntegerField()
+#     Start_Time=models.DateTimeField(null=True,blank=True)
+#     End_Time=models.DateTimeField(null=True,blank=True)
+#     Duration=models.DurationField(null=True,blank=True)
+#     Last_Activity_Time=models.DateTimeField(default=timezone.now)

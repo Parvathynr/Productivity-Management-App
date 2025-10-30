@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import Tasks, Projects
 
-
+# IDLE_AUTO_STOP_MINUTES = 5
 # Create your views here.
 @csrf_exempt
 def Add_Tasks(request):
@@ -230,6 +230,40 @@ def Delete_Projects(request,id):
         except Exception as e:
             return JsonResponse({'error':f'deleted field    {str(e)}'})
     return JsonResponse({'error':'invalid request method'})
+
+
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+from .models import Tasks
+
+@csrf_exempt
+def update_task_status(request):
+    if request.method == "POST":
+        data = json.loads(request.body.decode("utf-8"))
+
+        task_id = data.get("task_id")
+        new_status = data.get("new_status")
+
+        try:
+            task = Tasks.objects.get(id=task_id)
+            task.Status = new_status
+            task.save()
+            print(new_status)
+            return JsonResponse({
+                "status": "success",
+                "message": "Task status updated successfully",
+                "task_id": task_id,
+                "new_status": new_status
+            })
+
+        except Tasks.DoesNotExist:
+            return JsonResponse({
+                "status": "error",
+                "message": "Task not found"
+            }, status=404)
+
+    return JsonResponse({"status": "error", "message": "POST method required"}, status=400)
 
 
 
