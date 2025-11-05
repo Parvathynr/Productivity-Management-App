@@ -2,8 +2,14 @@ from django.db.models.fields import return_None
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
-
-from .models import Tasks, Projects
+from django.views.decorators.http import require_http_methods
+from .models import Tasks, Projects, Task_Time
+from .models import Tasks
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+from .models import Tasks
+from django.utils import timezone
 
 # IDLE_AUTO_STOP_MINUTES = 5
 # Create your views here.
@@ -231,12 +237,6 @@ def Delete_Projects(request,id):
             return JsonResponse({'error':f'deleted field    {str(e)}'})
     return JsonResponse({'error':'invalid request method'})
 
-
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-import json
-from .models import Tasks
-
 @csrf_exempt
 def update_task_status(request):
     if request.method == "POST":
@@ -265,15 +265,85 @@ def update_task_status(request):
 
     return JsonResponse({"status": "error", "message": "POST method required"}, status=400)
 
-def hello(request):
-    return render(request,'index.html')
 
+@csrf_exempt
+@require_http_methods(["POST"])
+def Start_Task(request):
+    try:
+        data = json.loads(request.body)
+        task_name = data.get('name')
+        if not task_name:
+            return JsonResponse({"error": "Task name is required"}, status=400)
 
+        # Get or create the task
+        task, created = Tasks.objects.get_or_create(Task_Name=task_name)
 
+        # Check if there’s already a running session
+        if Task_Time.objects.filter(Task=task, End_Time__isnull=True).exists():
+            return JsonResponse({"error": "Task already running"}, status=400)
 
+        # Create new session with Start_Time set automatically
+        Task_Time.objects.create(Task=task, Start_Time=timezone.now())
 
+        return JsonResponse({
+            "message": f"Started task '{task.Task_Name}'",
+            "task_id": task.id
+        }, status=201)
 
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
+@csrf_exempt
+@require_http_methods(["POST"])
+def Stop_Task(request):
+    try:
+        data = json.loads(request.body)
+        task_name = data.get('name')
+        if not task_name:
+            return JsonResponse({"error": "Task name is required"}, status=400)
+
+        # Get the task
+        try:
+            task = Tasks.objects.get(Task_Name=task_name)
+        except Tasks.DoesNotExist:
+            return JsonResponse({"error": "Task not found"}, status=404)
+
+        # Find active session
+        try:
+            session = Task_Time.objects.filter(Task=task, End_Time__isnull=True).latest("Start_Time")
+        except Task_Time.DoesNotExist:
+            return JsonResponse({"error": "No active session found"}, status=400)
+
+        # Stop session
+        session.End_Time = timezone.now()
+        session.Duration = session.End_Time - session.Start_Time
+        session.save()
+
+        # Add duration to total task time
+        task.Total_Time += session.Duration
+        task.save()
+
+        return JsonResponse({
+            "message": f"Stopped task '{task.Task_Name}'",
+            "session_duration": str(session.Duration),
+            "total_duration": str(task.Total_Time)
+        })
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+@require_http_methods(["GET"])
+def Task_Summary(request):
+    tasks=Tasks.objects.all()
+    data=[]
+    for t in tasks:
+        data.append({
+            "id":t.id,
+            "Task_Name":t.Task_Name,
+            "Total_Time":str(t.Total_Time),
+            "Sessions":t.sessions.count()
+        })
+    return JsonResponse({"tasks":data})
 
 
 

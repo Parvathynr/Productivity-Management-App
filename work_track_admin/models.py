@@ -1,9 +1,8 @@
-from time import timezone
-
+from datetime import timedelta
+from django.utils import timezone
 from django.db import models
 from django.db.models import DateField
 from django.views.decorators.csrf import csrf_exempt
-
 
 
 # Create your models here.
@@ -22,6 +21,7 @@ class Tasks(models.Model):
     Discussion=models.CharField(max_length=1000)
     Links=models.URLField()
     Attachments=models.URLField()
+    Total_Time = models.DurationField(default=timedelta())
 
 class Projects(models.Model):
 
@@ -42,10 +42,18 @@ class Projects(models.Model):
     Status = models.CharField(max_length=50,choices=Status_choices)
     Active=models.CharField(max_length=15,choices=Active_choices)
 
-# class TimeTrack(models.Models):
-#     User_Id=models.IntegerField()
-#     Task_Id=models.IntegerField()
-#     Start_Time=models.DateTimeField(null=True,blank=True)
-#     End_Time=models.DateTimeField(null=True,blank=True)
-#     Duration=models.DurationField(null=True,blank=True)
-#     Last_Activity_Time=models.DateTimeField(default=timezone.now)
+class Task_Time(models.Model):
+    Task = models.ForeignKey(Tasks, on_delete=models.CASCADE, related_name="sessions")
+    Start_Time = models.DateTimeField(default=timezone.now, null=True, blank=True)
+    End_Time = models.DateTimeField(null=True, blank=True)
+    Duration = models.DurationField(null=True, blank=True)
+
+    def stop(self):
+        if not self.End_Time:
+            self.End_Time = timezone.now()
+            self.Duration = self.End_Time - self.Start_Time
+            self.save()
+            self.Task.Total_Time += self.Duration
+            self.Task.save()
+
+
